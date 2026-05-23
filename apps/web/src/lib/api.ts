@@ -92,8 +92,9 @@ api.interceptors.response.use(
         
         // Client side redirect to login page upon session expiration
         if (typeof window !== 'undefined') {
-          // Avoid loop if already on login page
-          if (!window.location.pathname.includes('/login')) {
+          // Avoid loop if already on login page, and don't interrupt the callback process
+          const path = window.location.pathname;
+          if (!path.includes('/login') && !path.includes('/callback')) {
             window.location.href = '/login?expired=true';
           }
         }

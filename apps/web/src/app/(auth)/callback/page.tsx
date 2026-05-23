@@ -36,7 +36,10 @@ export default function CallbackPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100">
-        <p className="text-slate-400">Loading auth context...</p>
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-12 w-12 rounded-full border-2 border-slate-800" />
+          <p className="text-slate-400 text-lg font-medium">Loading auth context...</p>
+        </div>
       </div>
     }>
       <CallbackContent />
