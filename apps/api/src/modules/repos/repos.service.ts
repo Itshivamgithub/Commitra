@@ -62,6 +62,15 @@ export class ReposService {
 
       logger.info(`Fetched ${allGithubRepos.length} repositories from GitHub for user ${user.username}`);
 
+      // DEBUG: Log first repo stars/forks
+      if (allGithubRepos.length > 0) {
+        logger.info({ 
+          name: allGithubRepos[0].name, 
+          stars: allGithubRepos[0].stargazers_count, 
+          forks: allGithubRepos[0].forks_count 
+        }, 'First repository metadata from GitHub');
+      }
+
       // 3. Map GitHub repos to Prisma models
       const mappedRepos = allGithubRepos.map((repo) => ({
         githubId: repo.id,
@@ -106,6 +115,19 @@ export class ReposService {
 
       const results = await prisma.$transaction(upserts);
 
+      // 5. Enqueue background sync for each repository to populate analytics
+      // We only do this for the first 10 to avoid overwhelming the queue immediately
+      // The rest will be picked up by the nightly sync or manual triggers
+      for (const repo of results.slice(0, 15)) {
+        const { syncQueue } = await import('../../jobs/queues');
+        await syncQueue.add('sync-repo', {
+          repositoryId: repo.id,
+          repoFullName: repo.fullName,
+          userId: user.id,
+          triggeredBy: 'initial_sync',
+        });
+      }
+
       return {
         synced: results.length,
         repositories: results,
@@ -136,10 +158,13 @@ export class ReposService {
 
     orderBy[sortField] = orderDir;
 
-    return prisma.repository.findMany({
+    const repos = await prisma.repository.findMany({
       where,
       orderBy,
     });
+
+    logger.info({ userId, count: repos.length }, 'Fetched repositories from database in service');
+    return repos;
   }
 
   /**

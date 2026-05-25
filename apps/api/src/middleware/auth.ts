@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { prisma } from '../lib/prisma';
+import logger from '../lib/logger';
 
 /**
  * Middleware that requires a valid JWT access token in the Authorization header.
@@ -57,6 +58,8 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         error: 'Unauthorized: User not found',
       });
     }
+
+    logger.info({ userId: user.id, username: user.username, path: req.originalUrl || req.url }, 'Authenticated request');
 
     // Attach user to request
     req.user = user;

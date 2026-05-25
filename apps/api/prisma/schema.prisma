@@ -1,53 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id             String         @id @default(cuid())
-  githubId       String         @unique
-  username       String
-  displayName    String?
-  email          String?
-  avatarUrl      String?
-  githubTokenEnc String // AES-256-GCM encrypted
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  repositories   Repository[]
-  refreshTokens  RefreshToken[]
+  id                   String            @id @default(cuid())
+  githubId             String            @unique
+  username             String
+  displayName          String?
+  email                String?
+  avatarUrl            String?
+  githubTokenEnc       String
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  refreshTokens        RefreshToken[]
+  repositories         Repository[]
+  ownedWorkspaces      Workspace[]       @relation("WorkspaceOwner")
+  workspaceMemberships WorkspaceMember[]
 }
 
 model RefreshToken {
   id        String   @id @default(cuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Repository {
-  id              String    @id @default(cuid())
-  githubId        Int       @unique
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name            String
-  fullName        String
-  description     String?
-  language        String?
-  stars           Int       @default(0)
-  forks           Int       @default(0)
-  isPrivate       Boolean   @default(false)
-  isArchived      Boolean   @default(false)
-  defaultBranch   String    @default("main")
-  githubUrl       String
-  lastPushedAt    DateTime?
-  githubCreatedAt DateTime?
-  syncedAt        DateTime  @default(now())
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                    String                @id @default(cuid())
+  githubId              BigInt                @unique
+  userId                String
+  name                  String
+  fullName              String
+  description           String?
+  language              String?
+  stars                 Int                   @default(0)
+  forks                 Int                   @default(0)
+  isPrivate             Boolean               @default(false)
+  isArchived            Boolean               @default(false)
+  defaultBranch         String                @default("main")
+  githubUrl             String
+  lastPushedAt          DateTime?
+  githubCreatedAt       DateTime?
+  lastAnalyzedAt        DateTime?
+  syncedAt              DateTime              @default(now())
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  lastWebhookAt         DateTime?
+  webhookEnabled        Boolean               @default(false)
+  aiInsights            AIInsight[]
+  snapshots             AnalyticsSnapshot[]
+  commits               Commit[]
+  complexityReport      ComplexityReport?
+  healthScore           HealthScore?
+  issues                Issue[]
+  pullRequests          PullRequest[]
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  webhook               Webhook?
+  workflowRuns          WorkflowRun[]
+  workspaceRepositories WorkspaceRepository[]
+}
+
+model Webhook {
+  id           String     @id @default(cuid())
+  repositoryId String     @unique
+  githubHookId BigInt
+  secret       String
+  active       Boolean    @default(true)
+  events       String[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model ComplexityReport {
+  id                String     @id @default(cuid())
+  repositoryId      String     @unique
+  totalFiles        Int
+  totalLines        Int
+  largeFiles        Json
+  languageBreakdown Json
+  fileTypeCount     Json
+  avgFileSizeBytes  Float
+  complexityScore   Float
+  generatedAt       DateTime   @default(now())
+  repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model AIInsight {
+  id           String     @id @default(cuid())
+  repositoryId String
+  type         String
+  content      String
+  tokensUsed   Int
+  modelUsed    String
+  generatedAt  DateTime   @default(now())
+  expiresAt    DateTime
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, type])
+  @@index([repositoryId, type])
+}
+
+model HealthScore {
+  id                String     @id @default(cuid())
+  repositoryId      String     @unique
+  overallScore      Float
+  commitConsistency Float
+  prHealthScore     Float
+  issueHealthScore  Float
+  codeActivityScore Float
+  communityScore    Float
+  grade             String
+  insights          String[]
+  calculatedAt      DateTime   @default(now())
+  previousScore     Float?
+  scoreDelta        Float?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model Commit {
+  id           String     @id @default(cuid())
+  sha          String     @unique
+  repositoryId String
+  authorLogin  String?
+  authorName   String?
+  authorEmail  String?
+  message      String
+  committedAt  DateTime
+  additions    Int        @default(0)
+  deletions    Int        @default(0)
+  changedFiles Int        @default(0)
+  createdAt    DateTime   @default(now())
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([repositoryId, committedAt])
+  @@index([authorLogin])
+}
+
+model PullRequest {
+  id           String     @id @default(cuid())
+  githubId     BigInt
+  repositoryId String
+  number       Int
+  title        String
+  state        String
+  authorLogin  String?
+  createdAt    DateTime
+  closedAt     DateTime?
+  mergedAt     DateTime?
+  additions    Int        @default(0)
+  deletions    Int        @default(0)
+  changedFiles Int        @default(0)
+  commentCount Int        @default(0)
+  reviewCount  Int        @default(0)
+  syncedAt     DateTime   @default(now())
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId, state])
+  @@index([authorLogin])
+}
+
+model Issue {
+  id           String     @id @default(cuid())
+  githubId     BigInt
+  repositoryId String
+  number       Int
+  title        String
+  state        String
+  authorLogin  String?
+  labels       String[]
+  createdAt    DateTime
+  closedAt     DateTime?
+  syncedAt     DateTime   @default(now())
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId, state])
+}
+
+model AnalyticsSnapshot {
+  id                 String     @id @default(cuid())
+  repositoryId       String
+  snapshotDate       DateTime
+  commitCount        Int        @default(0)
+  prMerged           Int        @default(0)
+  prOpened           Int        @default(0)
+  issuesOpened       Int        @default(0)
+  issuesClosed       Int        @default(0)
+  activeContributors Int        @default(0)
+  additions          Int        @default(0)
+  deletions          Int        @default(0)
+  createdAt          DateTime   @default(now())
+  repository         Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, snapshotDate])
+  @@index([repositoryId, snapshotDate])
+}
+
+model Workspace {
+  id             String                @id @default(cuid())
+  name           String
+  slug           String                @unique
+  avatarUrl      String?
+  githubOrgLogin String?
+  ownerId        String
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  owner          User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  invites        WorkspaceInvite[]
+  members        WorkspaceMember[]
+  repositories   WorkspaceRepository[]
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        String
+  invitedBy   String?
+  joinedAt    DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+model WorkspaceRepository {
+  id           String     @id @default(cuid())
+  workspaceId  String
+  repositoryId String
+  addedBy      String
+  addedAt      DateTime   @default(now())
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  workspace    Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, repositoryId])
+}
+
+model WorkspaceInvite {
+  id          String    @id @default(cuid())
+  workspaceId String
+  email       String
+  role        String    @default("member")
+  token       String    @unique
+  invitedBy   String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([email])
+}
+
+model WorkflowRun {
+  id              String     @id @default(cuid())
+  githubRunId     BigInt     @unique
+  repositoryId    String
+  workflowName    String
+  workflowFile    String
+  branch          String
+  event           String
+  status          String
+  conclusion      String?
+  startedAt       DateTime
+  completedAt     DateTime?
+  durationSeconds Int?
+  triggeredBy     String?
+  commitSha       String?
+  syncedAt        DateTime   @default(now())
+  repository      Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([repositoryId, startedAt])
+  @@index([repositoryId, conclusion])
 }

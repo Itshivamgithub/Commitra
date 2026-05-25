@@ -1,19 +1,23 @@
-FROM node:22-alpine
-
+# Stage 1: Builder
+FROM node:22 AS builder
 WORKDIR /app
+ENV CI=true
+COPY package.json pnpm-lock.yaml .npmrc ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/types/package.json ./packages/types/
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm --filter api build
 
+# Stage 2: Production
+FROM node:22 AS production
+WORKDIR /app
+ENV NODE_ENV=production
+ENV CI=true
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/apps/api/package.json .
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/prisma ./prisma
 RUN npm install -g pnpm
-
-# Copy root and workspaces
-COPY package.json pnpm-workspace.yaml turbo.json ./
-COPY packages/types ./packages/types
-COPY apps/api ./apps/api
-
-# Install dependencies including workspace packages
-RUN pnpm install --no-frozen-lockfile
-
-WORKDIR /app/apps/api
-
 EXPOSE 3001
-
-CMD ["pnpm", "dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/app.js"]

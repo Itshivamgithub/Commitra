@@ -5,6 +5,7 @@ import { z } from 'zod';
 // Load environment variables from current directory, parent directory, and workspace root
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 const envSchema = z.object({
@@ -22,6 +23,15 @@ const envSchema = z.object({
   WEB_URL: z.string().url('WEB_URL must be a valid URL'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3001),
+  ADMIN_TOKEN: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+  GROQ_API_KEY: z.string().optional(),
+  GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().default('noreply@commitra.app'),
+  PUPPETEER_EXECUTABLE_PATH: z.string().optional(),
+  WEBHOOK_BASE_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

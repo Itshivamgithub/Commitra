@@ -19,7 +19,7 @@ export interface RefreshToken {
 
 export interface Repository {
   id: string;
-  githubId: number;
+  githubId: string;
   userId: string;
   name: string;
   fullName: string;
@@ -33,6 +33,7 @@ export interface Repository {
   githubUrl: string;
   lastPushedAt: Date | string | null;
   githubCreatedAt: Date | string | null;
+  lastAnalyzedAt: Date | string | null;
   syncedAt: Date | string;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -41,3 +42,6 @@ export interface Repository {
 export type ApiResponse<T> = 
   | { success: true; data: T }
   | { success: false; error: string; details?: any };
+
+export * from './jobs';
+export * from './socket';

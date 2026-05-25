@@ -2,8 +2,12 @@ import { Router } from 'express';
 import { authController } from './auth.controller';
 import { requireAuth } from '../../middleware/auth';
 import { tryCatch } from '../../lib/tryCatch';
+import { authLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
+
+// Apply auth rate limiter
+router.use(authLimiter);
 
 // OAuth initiation
 router.get('/github', authController.githubLogin);

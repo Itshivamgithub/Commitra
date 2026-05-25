@@ -22,7 +22,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(() => {
     // Redirects to API login route which triggers GitHub OAuth redirection
-    window.location.href = 'http://localhost:3001/api/auth/github';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    window.location.href = `${apiUrl}/api/auth/github`;
   }, []);
 
   const logout = useCallback(async () => {

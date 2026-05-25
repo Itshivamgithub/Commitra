@@ -17,7 +17,7 @@ export interface RefreshToken {
 }
 export interface Repository {
     id: string;
-    githubId: number;
+    githubId: string;
     userId: string;
     name: string;
     fullName: string;
@@ -31,6 +31,7 @@ export interface Repository {
     githubUrl: string;
     lastPushedAt: Date | string | null;
     githubCreatedAt: Date | string | null;
+    lastAnalyzedAt: Date | string | null;
     syncedAt: Date | string;
     createdAt: Date | string;
     updatedAt: Date | string;
@@ -43,4 +44,6 @@ export type ApiResponse<T> = {
     error: string;
     details?: any;
 };
+export * from './jobs';
+export * from './socket';
 //# sourceMappingURL=index.d.ts.map

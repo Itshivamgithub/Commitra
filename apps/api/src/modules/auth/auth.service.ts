@@ -151,6 +151,18 @@ export class AuthService {
   }
 
   /**
+   * Verifies an access token and returns its payload
+   */
+  verifyAccessToken(token: string): { userId: string } {
+    try {
+      const payload = jwt.verify(token, env.JWT_SECRET) as { userId: string };
+      return payload;
+    } catch (error) {
+      throw new Error('Invalid or expired access token');
+    }
+  }
+
+  /**
    * Validates refresh token and returns corresponding user
    */
   async validateRefreshToken(token: string) {

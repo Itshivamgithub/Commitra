@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: 
+          version: 8
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter api typecheck
+      - run: pnpm --filter web typecheck
+      - run: pnpm --filter api lint
+      - run: pnpm --filter web lint
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: commitra_test
+          POSTGRES_USER: commitra
+          POSTGRES_PASSWORD: commitra
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://commitra:commitra@localhost:5432/commitra_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: test-secret-min-64-chars-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      REFRESH_TOKEN_SECRET: test-refresh-secret-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: 
+          version: 8
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter api prisma migrate deploy
+      - run: pnpm --filter api test

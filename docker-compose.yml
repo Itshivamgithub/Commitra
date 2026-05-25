@@ -40,6 +40,10 @@ services:
       - "3001:3001"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://commitra:commitra@postgres:5432/commitra
+      - REDIS_URL=redis://redis:6379
+      - CI=true
     volumes:
       - .:/app
       - /app/node_modules
@@ -49,6 +53,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    command: >
+      sh -c "pnpm install && npx prisma migrate deploy && pnpm --filter @commitra/api dev"
 
   web:
     build:
@@ -59,12 +65,19 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://commitra:commitra@postgres:5432/commitra
+      - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - CI=true
     volumes:
       - .:/app
       - /app/node_modules
       - /app/apps/web/node_modules
     depends_on:
       - api
+    command: >
+      sh -c "pnpm install && pnpm --filter @commitra/web dev"
 
 volumes:
   postgres_data:

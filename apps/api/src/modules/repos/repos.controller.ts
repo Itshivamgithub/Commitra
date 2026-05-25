@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { reposService } from './repos.service';
+import logger from '../../lib/logger';
 
 export class ReposController {
   /**
@@ -30,9 +31,6 @@ export class ReposController {
     }
   };
 
-  /**
-   * Returns a list of user repositories from the database
-   */
   getRepos = async (req: Request, res: Response) => {
     if (!req.user) {
       return res.status(401).json({
@@ -44,11 +42,21 @@ export class ReposController {
     const { language, sort, order } = req.query;
 
     try {
+      logger.info({ userId: req.user.id, username: req.user.username }, 'Fetching repos for user');
       const repos = await reposService.getUserRepos(req.user.id, {
         language: typeof language === 'string' ? language : undefined,
         sort: typeof sort === 'string' ? sort : undefined,
         order: typeof order === 'string' ? order : undefined,
       });
+
+      logger.info({ userId: req.user.id, count: repos.length }, 'Found repos in database');
+
+      // DEBUG: Log stars/forks for the first few repos
+      if (repos.length > 0) {
+        logger.info({ 
+          sample: repos.slice(0, 3).map(r => ({ name: r.name, stars: r.stars, forks: r.forks })) 
+        }, 'Sending repository data to frontend');
+      }
 
       return res.json({
         success: true,
