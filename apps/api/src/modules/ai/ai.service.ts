@@ -187,7 +187,7 @@ export class AIService {
     return results;
   }
 
-  private getWeeklyCommitCounts(commits: any[]) {
+  private getWeeklyCommitCounts(commits: { committedAt: Date | string }[]) {
     const weeks: number[] = new Array(13).fill(0);
     const now = new Date();
     commits.forEach(c => {
@@ -200,14 +200,14 @@ export class AIService {
     return weeks.reverse();
   }
 
-  private calculateAvgMergeTime(prs: any[]) {
+  private calculateAvgMergeTime(prs: { state: string; mergedAt: Date | string | null; createdAt: Date | string }[]) {
     const merged = prs.filter(p => p.state === 'merged' && p.mergedAt);
     if (merged.length === 0) return 0;
     const total = merged.reduce((sum, p) => sum + this.differenceInHours(new Date(p.mergedAt!), new Date(p.createdAt)), 0);
     return total / merged.length;
   }
 
-  private getTopLabels(issues: any[]) {
+  private getTopLabels(issues: { labels: any }[]) {
     const labelsMap: Record<string, number> = {};
     issues.forEach(i => {
       if (Array.isArray(i.labels)) {
