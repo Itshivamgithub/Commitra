@@ -62,10 +62,9 @@ export class ReportsService {
       });
 
       const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
-      const pdf = await page.pdf({
-        format: 'A4',
+      await page.setContent(html, { waitUntil: 'load' });
+
+      const pdf = await page.pdf({        format: 'A4',
         printBackground: true,
         margin: { top: '24mm', bottom: '24mm', left: '16mm', right: '16mm' },
         displayHeaderFooter: true,

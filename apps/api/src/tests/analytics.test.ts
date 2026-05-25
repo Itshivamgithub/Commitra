@@ -1,3 +1,5 @@
+/// <reference types="vitest" />
+import { describe, it, expect, beforeEach } from 'vitest';
 import { HealthScoreCalculator } from '../modules/analytics/health.calculator';
 
 describe('HealthScoreCalculator', () => {

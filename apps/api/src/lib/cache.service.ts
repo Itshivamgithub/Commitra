@@ -23,7 +23,7 @@ class CacheService {
 
       // 2. Acquire a Redis lock (mutex)
       const lockKey = `${key}:lock`;
-      const lockAcquired = await redis.set(lockKey, '1', 'NX', 'EX', 10);
+      const lockAcquired = await redis.set(lockKey, '1', 'EX', 10, 'NX' as const);
 
       if (lockAcquired) {
         try {

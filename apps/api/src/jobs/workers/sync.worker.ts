@@ -42,10 +42,8 @@ export const syncWorker = new Worker(
     connection: redis,
     concurrency: 3,
     settings: {
-      backoffStrategies: {
-        exponential: (attempts: number) => {
-          return Math.pow(2, attempts - 1) * 5000;
-        },
+      backoffStrategy: (attempts: number): number => {
+        return Math.pow(2, attempts - 1) * 5000;
       },
     },
   }

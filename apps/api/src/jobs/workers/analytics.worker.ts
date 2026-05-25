@@ -20,10 +20,8 @@ export const analyticsWorker = new Worker(
     connection: redis,
     concurrency: 2,
     settings: {
-      backoffStrategies: {
-        exponential: (attempts: number) => {
-          return Math.pow(2, attempts - 1) * 10000;
-        },
+      backoffStrategy: (attempts: number): number => {
+        return Math.pow(2, attempts - 1) * 10000;
       },
     },
   }
