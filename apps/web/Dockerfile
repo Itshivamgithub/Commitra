@@ -2,12 +2,12 @@
 FROM node:22 AS builder
 WORKDIR /app
 ENV CI=true
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/types/package.json ./packages/types/
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm --filter web build
+RUN pnpm --filter web run build
 
 # Stage 2: Production
 FROM node:22 AS production
