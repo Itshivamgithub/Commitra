@@ -8,6 +8,9 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
+    "prisma:generate": {
+      "cache": true
+    },
     "dev": {
       "cache": false,
       "persistent": true

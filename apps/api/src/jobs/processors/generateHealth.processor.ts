@@ -5,6 +5,7 @@ import logger from '../../lib/logger';
 import { HealthScoreCalculator } from '../../modules/analytics/health.calculator';
 import { GenerateHealthJobData } from '@commitra/types';
 import { emitHealthUpdated } from '../../lib/emit';
+import { subDays } from 'date-fns';
 
 export const generateHealthProcessor = async (job: Job<GenerateHealthJobData>) => {
   const { repositoryId, userId } = job.data;
@@ -12,31 +13,46 @@ export const generateHealthProcessor = async (job: Job<GenerateHealthJobData>) =
   logger.info({ repositoryId }, 'Calculating health score');
 
   try {
+    const ninetyDaysAgo = subDays(new Date(), 90);
+
     const repo = await prisma.repository.findUnique({
       where: { id: repositoryId },
       include: {
-        commits: true,
-        pullRequests: true,
-        issues: true,
         healthScore: true,
       },
     });
 
     if (!repo) throw new Error('Repository not found');
 
+    // Fetch related data separately with selection and filters to save memory
+    const [commits, prs, issues] = await Promise.all([
+      prisma.commit.findMany({
+        where: { repositoryId, committedAt: { gte: ninetyDaysAgo } },
+        select: { id: true, committedAt: true, additions: true, deletions: true, authorLogin: true },
+      }),
+      prisma.pullRequest.findMany({
+        where: { repositoryId, createdAt: { gte: ninetyDaysAgo } },
+        select: { id: true, state: true, createdAt: true, mergedAt: true, authorLogin: true },
+      }),
+      prisma.issue.findMany({
+        where: { repositoryId, createdAt: { gte: ninetyDaysAgo } },
+        select: { id: true, state: true, createdAt: true, closedAt: true },
+      }),
+    ]);
+
     const calculator = new HealthScoreCalculator();
 
     const scores = {
-      commitConsistency: calculator.calculateCommitConsistency(repo.commits),
-      prHealthScore: calculator.calculatePRHealth(repo.pullRequests),
-      issueHealthScore: calculator.calculateIssueHealth(repo.issues),
-      codeActivityScore: calculator.calculateCodeActivity(repo.commits, repo),
-      communityScore: calculator.calculateCommunityScore(repo, repo.pullRequests, repo.commits),
+      commitConsistency: calculator.calculateCommitConsistency(commits as any),
+      prHealthScore: calculator.calculatePRHealth(prs as any),
+      issueHealthScore: calculator.calculateIssueHealth(issues as any),
+      codeActivityScore: calculator.calculateCodeActivity(commits as any, repo),
+      communityScore: calculator.calculateCommunityScore(repo, prs as any, commits as any),
     };
 
     const overallScore = calculator.calculateOverallScore(scores);
     const grade = calculator.gradeFromScore(overallScore);
-    const insights = calculator.generateScoreInsights(scores, repo.commits, repo.pullRequests, repo.issues);
+    const insights = calculator.generateScoreInsights(scores, commits as any, prs as any, issues as any);
 
     const previousScore = repo.healthScore?.overallScore || null;
     const scoreDelta = previousScore !== null ? overallScore - previousScore : null;

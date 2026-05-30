@@ -85,7 +85,7 @@ export default function AIInsightsPage() {
           </div>
           <h3 className="text-xl font-bold mb-2">No AI insights generated yet</h3>
           <p className="text-muted-foreground text-center max-w-md mb-8">
-            Generate insights to get an AI-powered analysis of your repository's activity, team dynamics, and actionable recommendations.
+            Generate insights to get an AI-powered analysis of your repository&apos;s activity, team dynamics, and actionable recommendations.
           </p>
           <button
             onClick={handleGenerate}

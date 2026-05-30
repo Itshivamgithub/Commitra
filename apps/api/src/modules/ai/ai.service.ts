@@ -85,9 +85,11 @@ export class AIService {
       }),
       prisma.pullRequest.findMany({
         where: { repositoryId, createdAt: { gte: ninetyDaysAgo } },
+        select: { state: true, createdAt: true, mergedAt: true, authorLogin: true },
       }),
       prisma.issue.findMany({
         where: { repositoryId, createdAt: { gte: ninetyDaysAgo } },
+        select: { state: true, createdAt: true, closedAt: true, labels: true },
       }),
     ]);
 

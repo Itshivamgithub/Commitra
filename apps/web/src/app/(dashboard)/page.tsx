@@ -148,7 +148,7 @@ export default function DashboardHome() {
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">No repositories found</h2>
           <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
-            Click the "Sync All Repos" button to fetch your repositories from GitHub.
+            Click the &quot;Sync All Repos&quot; button to fetch your repositories from GitHub.
           </p>
         </div>
       ) : (
