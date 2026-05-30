@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "start": "turbo run start",
+    "start": "node start-render.js",
     "lint": "turbo run lint",
     "postinstall": "turbo run prisma:generate"
   },
