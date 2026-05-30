@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      prisma:
+        specifier: ^5.14.0
+        version: 5.14.0
       turbo:
         specifier: ^2.0.4
         version: 2.9.14
@@ -29,6 +32,9 @@ importers:
       '@sparticuz/chromium':
         specifier: ^148.0.0
         version: 148.0.0
+      '@vitest/coverage-v8':
+        specifier: ^4.1.7
+        version: 4.1.7(vitest@4.1.7)
       axios:
         specifier: ^1.6.8
         version: 1.16.1
@@ -89,6 +95,9 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@4.22.2)
+      vitest:
+        specifier: ^4.1.7
+        version: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@20.19.41)(@vitest/coverage-v8@4.1.7)(vite@8.0.14(@types/node@20.19.41)(jiti@1.21.7))
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -114,9 +123,6 @@ importers:
       '@types/swagger-ui-express':
         specifier: ^4.1.8
         version: 4.1.8
-      '@vitest/coverage-v8':
-        specifier: ^4.1.7
-        version: 4.1.7(vitest@4.1.7)
       pino-pretty:
         specifier: ^11.1.0
         version: 11.3.0
@@ -129,9 +135,6 @@ importers:
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
-      vitest:
-        specifier: ^4.1.7
-        version: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@20.19.41)(@vitest/coverage-v8@4.1.7)(vite@8.0.14(@types/node@20.19.41)(jiti@1.21.7))
 
   apps/web:
     dependencies:

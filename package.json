@@ -10,7 +10,8 @@
     "lint": "turbo run lint"
   },
   "dependencies": {
-    "turbo": "^2.0.4"
+    "turbo": "^2.0.4",
+    "prisma": "^5.14.0"
   },
   "devDependencies": {
   },
