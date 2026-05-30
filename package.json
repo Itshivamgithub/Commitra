@@ -7,11 +7,12 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "start": "node start-render.js",
-    "lint": "turbo run lint",
-    "postinstall": "turbo run prisma:generate"
+    "lint": "turbo run lint"
+  },
+  "dependencies": {
+    "turbo": "^2.0.4"
   },
   "devDependencies": {
-    "turbo": "^2.0.4"
   },
   "prisma": {
     "schema": "apps/api/prisma/schema.prisma"
