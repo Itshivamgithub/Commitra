@@ -19,7 +19,12 @@ services:
     # --filter=@commitra/api scopes to ONLY the API package — the Next.js
     # frontend (web) is deployed on Vercel and must NOT be built here
     # (a Next.js build consumes 300-400 MB RAM, likely the real "512 MB" OOM).
-    buildCommand: pnpm install --no-frozen-lockfile && pnpm --filter @commitra/api build
+    # corepack enable forces the pnpm version pinned in package.json
+    # (pnpm@9.15.4); without it Render's default pnpm rejects --no-frozen-lockfile.
+    # --prod=false installs devDependencies (TypeScript) even though
+    # NODE_ENV=production is set — the pnpm-correct replacement for npm's
+    # --include=dev (which pnpm does not understand).
+    buildCommand: corepack enable && pnpm install --no-frozen-lockfile --prod=false && pnpm --filter @commitra/api build
 
     # ── Pre-Deploy ─────────────────────────────────────────────────────────
     # Runs AFTER the build but BEFORE the new instance goes live.
