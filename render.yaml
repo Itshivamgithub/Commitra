@@ -1,0 +1,45 @@
+# render.yaml — Render Infrastructure as Code
+# This file version-controls the Render service configuration so it never
+# drifts from what's in the repo. Render reads this file automatically.
+# Docs: https://render.com/docs/infrastructure-as-code
+
+services:
+  - type: web
+    name: commitra-api
+    runtime: node
+    region: oregon  # change to match your current region
+    plan: starter   # 512 MB RAM — bump to "standard" (1 GB) if budget allows
+
+    # ── Build ──────────────────────────────────────────────────────────────
+    # pnpm install (without --prod) installs ALL deps including devDependencies,
+    # so TypeScript is available when tsc runs. Previously Render was running
+    # with NODE_ENV=production which caused pnpm to skip devDeps → TypeScript
+    # not installed → npx downloaded latest TS (7.x) → hard build error.
+    #
+    # --filter=@commitra/api scopes to ONLY the API package — the Next.js
+    # frontend (web) is deployed on Vercel and must NOT be built here
+    # (a Next.js build consumes 300-400 MB RAM, likely the real "512 MB" OOM).
+    buildCommand: pnpm install --no-frozen-lockfile && pnpm --filter @commitra/api build
+
+    # ── Pre-Deploy ─────────────────────────────────────────────────────────
+    # Runs AFTER the build but BEFORE the new instance goes live.
+    # Running prisma migrate here (instead of in the startCommand) ensures
+    # only ONE Node.js process is alive at a time, preventing the startup
+    # OOM that happens when migrate + app both run in the same shell command.
+    preDeployCommand: npx prisma migrate deploy
+
+    # ── Start ──────────────────────────────────────────────────────────────
+    # --max-old-space-size=300 limits the V8 heap to 300 MB, leaving ~212 MB
+    # for Node runtime overhead and the OS (safe on a 512 MB instance).
+    # Previously this was 400 MB, leaving only ~112 MB headroom → OOM.
+    startCommand: node --max-old-space-size=300 apps/api/dist/app.js
+
+    # ── Health Check ───────────────────────────────────────────────────────
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # All other secrets (DATABASE_URL, REDIS_URL, JWT_SECRET, etc.)
+      # must be set in the Render dashboard → Environment tab.
+      # Do NOT put secrets in this file.
