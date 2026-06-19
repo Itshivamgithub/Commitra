@@ -34,7 +34,14 @@ const envSchema = z.object({
   WEBHOOK_BASE_URL: z.string().optional(),
 });
 
-const parsed = envSchema.safeParse(process.env);
+// Trim whitespace/newlines from all env values — pasting secrets into
+// dashboards (Render, etc.) often appends a trailing \n, which silently
+// breaks values like GITHUB_CLIENT_ID (-> 404 on OAuth).
+const trimmedEnv = Object.fromEntries(
+  Object.entries(process.env).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
+);
+
+const parsed = envSchema.safeParse(trimmedEnv);
 
 if (!parsed.success) {
   console.error('❌ Invalid environment variables:', JSON.stringify(parsed.error.format(), null, 2));
